@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:include schemaLocation="result.xsd"/>
+  <xs:element name="authentication_pretext">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="result"/>
+        <xs:element maxOccurs="unbounded" ref="display_item"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="display_item">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="display_name"/>
+        <xs:element ref="form_element"/>
+        <xs:element ref="nickname"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required" type="xs:NCName"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="display_name" type="xs:string"/>
+  <xs:element name="form_element" type="xs:string"/>
+  <xs:element name="nickname" type="xs:string"/>
+</xs:schema>
