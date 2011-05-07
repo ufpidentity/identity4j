@@ -6,6 +6,7 @@
       <xs:sequence>
         <xs:element ref="result"/>
         <xs:element maxOccurs="unbounded" ref="display_item"/>
+        <xs:element name="name" type="xs:string"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
