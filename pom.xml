@@ -69,14 +69,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
-          <doclet>de.kruis.padoclet.PublishedApiDoclet</doclet>
-          <docletPath>/usr/home/richardl/dvp/publishedApiDoclet/source/publishedApiDoclet1.5-0.4.jar</docletPath>
-          <!-- <doclet>com.sun.tools.doclets.standard.Standard</doclet> -->
-          <!-- 
-          <doclet>ydoc.doclets.YStandard</doclet>
-          <docletPath>/usr/home/richardl/dvp/ydoc-3.0_01-jdk1.5/lib/ydoc.jar:/usr/home/richardl/dvp/ydoc-3.0_01-jdk1.5/resources</docletPath>
-          <additionalparam>-resourcepath /usr/home/richardl/dvp/ydoc-3.0_01-jdk1.5/resources</additionalparam>
-          -->
           <aggregate>true</aggregate>
           <links>
             <link>http://download.oracle.com/javase/6/docs/api/</link>

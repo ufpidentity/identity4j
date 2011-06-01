@@ -1,4 +1,4 @@
 /**
  * Truststore implementations for handling TLS credentials.
  */
-package com.ufp.security.identity.truststore;
+package com.ufp.identity4j.truststore;
