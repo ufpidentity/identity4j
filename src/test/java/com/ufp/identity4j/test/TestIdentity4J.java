@@ -16,8 +16,8 @@ import com.ufp.identity4j.data.DisplayItem;
 import com.ufp.identity4j.provider.IdentityServiceProvider;
 import com.ufp.identity4j.truststore.KeyManagerFactoryBuilder;
 import com.ufp.identity4j.truststore.TrustManagerFactoryBuilder;
-import com.ufp.identity4j.truststore.LocalHostnameVerifier;
-import com.ufp.identity4j.resolver.LocalhostIdentityResolver;
+import com.ufp.identity4j.truststore.IdentityHostnameVerifier;
+import com.ufp.identity4j.resolver.StaticIdentityResolver;
 
 public class TestIdentity4J {
     private IdentityServiceProvider identityServiceProvider = new IdentityServiceProvider();
@@ -39,8 +39,8 @@ public class TestIdentity4J {
         // set provider properties
         identityServiceProvider.setKeyManagerFactoryBuilder(keyManagerFactoryBuilder);
         identityServiceProvider.setTrustManagerFactoryBuilder(trustManagerFactoryBuilder);
-        identityServiceProvider.setHostnameVerifier(new LocalHostnameVerifier());
-        identityServiceProvider.setIdentityResolver(new LocalhostIdentityResolver());
+        identityServiceProvider.setHostnameVerifier(new IdentityHostnameVerifier("ufp.com"));
+        identityServiceProvider.setIdentityResolver(new StaticIdentityResolver("https://staging.ufp.com:8443/identity-services/services/"));
         identityServiceProvider.afterPropertiesSet();
     }
 
