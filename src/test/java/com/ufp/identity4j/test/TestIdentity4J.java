@@ -2,6 +2,8 @@ package com.ufp.identity4j.test;
 
 import java.io.File;
 
+import java.net.InetAddress;
+
 import java.util.Map;
 import java.util.HashMap;
 
@@ -21,11 +23,12 @@ import com.ufp.identity4j.resolver.StaticIdentityResolver;
 
 public class TestIdentity4J {
     private static IdentityServiceProvider identityServiceProvider;
+    private static String clientIp;
 
     @BeforeClass
     public static void setupIdentity4JProvider() throws Exception {
         identityServiceProvider = new IdentityServiceProvider();
-
+        clientIp = InetAddress.getLocalHost().getHostAddress();
         // setup the key manager factory
         KeyManagerFactoryBuilder keyManagerFactoryBuilder = new KeyManagerFactoryBuilder();
         keyManagerFactoryBuilder.setStore(new File("src/test/resources/example.com.p12"));
@@ -46,7 +49,8 @@ public class TestIdentity4J {
 
     @Test
     public void TestAuthenticate() throws Exception {
-        AuthenticationPretext authenticationPretext = identityServiceProvider.preAuthenticate("guest", "example.com");
+
+        AuthenticationPretext authenticationPretext = identityServiceProvider.preAuthenticate("guest", clientIp);
         assertNotNull(authenticationPretext);
         assertEquals(authenticationPretext.getResult().getValue(), "SUCCESS");
 
@@ -55,7 +59,7 @@ public class TestIdentity4J {
         Map<String, String []> parameterMap = new HashMap<String, String []>();
 
         parameterMap.put(displayItem.getName(), new String [] {"guest"});
-        AuthenticationContext authenticationContext = (AuthenticationContext)identityServiceProvider.authenticate(authenticationPretext.getName(), "example.com", parameterMap);
+        AuthenticationContext authenticationContext = (AuthenticationContext)identityServiceProvider.authenticate(authenticationPretext.getName(), clientIp, parameterMap);
         assertNotNull(authenticationContext);
         assertEquals(authenticationContext.getResult().getValue(), "SUCCESS");
     }
