@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import org.junit.Test;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import static org.junit.Assert.*;
 
 import com.ufp.identity4j.data.AuthenticationContext;
@@ -20,10 +20,10 @@ import com.ufp.identity4j.truststore.IdentityHostnameVerifier;
 import com.ufp.identity4j.resolver.StaticIdentityResolver;
 
 public class TestIdentity4J {
-    private IdentityServiceProvider identityServiceProvider = new IdentityServiceProvider();
+    private static IdentityServiceProvider identityServiceProvider;
 
-    @Before 
-    public void setupIdentity4JProvider() throws Exception {
+    @BeforeClass
+    public static void setupIdentity4JProvider() throws Exception {
         identityServiceProvider = new IdentityServiceProvider();
 
         // setup the key manager factory
@@ -50,6 +50,7 @@ public class TestIdentity4J {
         assertNotNull(authenticationPretext);
         assertEquals(authenticationPretext.getResult().getValue(), "SUCCESS");
 
+        assertEquals(authenticationPretext.getDisplayItem().size(), 1);
         DisplayItem displayItem = authenticationPretext.getDisplayItem().get(0);
         Map<String, String []> parameterMap = new HashMap<String, String []>();
 
