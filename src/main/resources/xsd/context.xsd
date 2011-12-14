@@ -10,4 +10,13 @@
     </xs:complexType>
   </xs:element>
   <xs:element name="name" type="xs:string"/>
+
+  <xs:element name="enrollment_context">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="result"/>
+        <xs:element ref="name"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>
