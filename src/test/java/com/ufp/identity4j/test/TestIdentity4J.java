@@ -21,8 +21,11 @@ import com.ufp.identity4j.truststore.TrustManagerFactoryBuilder;
 import com.ufp.identity4j.truststore.IdentityHostnameVerifier;
 import com.ufp.identity4j.resolver.StaticIdentityResolver;
 
+import org.apache.log4j.Logger;
+
 public class TestIdentity4J {
     private static IdentityServiceProvider identityServiceProvider;
+    private static Logger logger = Logger.getLogger(TestIdentity4J.class);
     private static String clientIp;
 
     @BeforeClass
@@ -42,14 +45,16 @@ public class TestIdentity4J {
         // set provider properties
         identityServiceProvider.setKeyManagerFactoryBuilder(keyManagerFactoryBuilder);
         identityServiceProvider.setTrustManagerFactoryBuilder(trustManagerFactoryBuilder);
-        identityServiceProvider.setHostnameVerifier(new IdentityHostnameVerifier("ufp.com"));
-        identityServiceProvider.setIdentityResolver(new StaticIdentityResolver("https://staging.ufp.com:8443/identity-services/services/"));
+
+        //identityServiceProvider.setHostnameVerifier(new IdentityHostnameVerifier("ufp.com"));
+        //identityServiceProvider.setIdentityResolver(new StaticIdentityResolver("https://staging.ufp.com:8443/identity-services/services/"));
+        identityServiceProvider.setHostnameVerifier(new IdentityHostnameVerifier("localhost"));
+        identityServiceProvider.setIdentityResolver(new StaticIdentityResolver("https://localhost:8443/identity-services/services/"));
         identityServiceProvider.afterPropertiesSet();
     }
 
     @Test
     public void TestAuthenticate() throws Exception {
-
         AuthenticationPretext authenticationPretext = identityServiceProvider.preAuthenticate("guest", clientIp);
         assertNotNull(authenticationPretext);
         assertEquals(authenticationPretext.getResult().getValue(), "SUCCESS");
@@ -62,6 +67,8 @@ public class TestIdentity4J {
         AuthenticationContext authenticationContext = (AuthenticationContext)identityServiceProvider.authenticate(authenticationPretext.getName(), clientIp, parameterMap);
         assertNotNull(authenticationContext);
         assertEquals(authenticationContext.getResult().getValue(), "SUCCESS");
+        logger.debug("found confidence of " + authenticationContext.getResult().getConfidence());
+        assertEquals(authenticationContext.getResult().getConfidence().doubleValue(), 0.0d, 0.0d);
     }
 
     @Test
