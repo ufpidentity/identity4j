@@ -8,6 +8,9 @@ import javax.xml.bind.Unmarshaller;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.HttpsURLConnection;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -22,6 +25,7 @@ import com.sun.jersey.api.client.ClientResponse.Status;
 
 import com.ufp.identity4j.data.AuthenticationPretext;
 import com.ufp.identity4j.data.AuthenticationContext;
+import com.ufp.identity4j.data.EnrollmentContext;
 import com.ufp.identity4j.data.DisplayItem;
 import com.ufp.identity4j.data.Result;
 
@@ -134,7 +138,22 @@ public class IdentityServiceProvider {
         try {
             ClientConfig clientConfig = new DefaultClientConfig();
             SSLContext sslContext = SSLContext.getInstance("TLSv1");
-            sslContext.init(keyManagerFactoryBuilder.getKeyManagerFactory().getKeyManagers(), trustManagerFactoryBuilder.getTrustManagerFactory().getTrustManagers(), null);
+            logger.debug("getting trustManagerFactory");
+            TrustManagerFactory trustManagerFactory = trustManagerFactoryBuilder.getTrustManagerFactory();
+            TrustManager tms [] = trustManagerFactory.getTrustManagers();  
+   
+            logger.debug("found " + tms.length + " trustManager(s)");
+            /* 
+             * Iterate over the returned trustmanagers, look 
+             * for an instance of X509TrustManager.  If found, 
+             * use that as our "default" trust manager. 
+             */  
+            for (int i = 0; i < tms.length; i++) {  
+                logger.debug("[" + i + "] " + tms[i].toString());
+            }  
+
+            sslContext.init(keyManagerFactoryBuilder.getKeyManagerFactory().getKeyManagers(), tms, null);
+            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
             clientConfig.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(hostnameVerifier, sslContext));
             client = Client.create(clientConfig);
         } catch (Exception e) {
@@ -180,7 +199,10 @@ public class IdentityServiceProvider {
         return r;
     }
 
-        
+    public EnrollmentContext enroll(String name, String host, Map<String, String[]> responseParams) throws IdentityServiceException {
+        return null;
+    }
+
     private Object handleClientResponse(ClientResponse clientResponse) throws Exception {
         JAXBContext jaxbContext = JAXBContext.newInstance(AuthenticationPretext.class, AuthenticationContext.class);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
