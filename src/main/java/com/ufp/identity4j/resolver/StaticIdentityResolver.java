@@ -19,6 +19,7 @@ public class  StaticIdentityResolver implements IdentityResolver {
     }
 
     public StaticIdentityResolver(String uriString) {
+        logger.debug("instantiating resolver with " + uriString);
         this.uriString = uriString;
     }
 

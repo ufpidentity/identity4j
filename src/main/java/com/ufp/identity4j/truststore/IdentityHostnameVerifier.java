@@ -15,6 +15,7 @@ public class IdentityHostnameVerifier implements HostnameVerifier {
     }
 
     public IdentityHostnameVerifier(String hostnameToVerify) {
+        logger.debug("instantiating verifier with " + hostnameToVerify);
         this.hostnameToVerify = hostnameToVerify;
     }
 
