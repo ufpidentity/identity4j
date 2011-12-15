@@ -35,7 +35,7 @@ public class TestIdentity4J {
         // setup the key manager factory
         KeyManagerFactoryBuilder keyManagerFactoryBuilder = new KeyManagerFactoryBuilder();
         keyManagerFactoryBuilder.setStore(new File("src/test/resources/example.com.p12"));
-        keyManagerFactoryBuilder.setPassphrase("example123");
+        keyManagerFactoryBuilder.setPassphrase("test");
 
         // setup the trust store
         TrustManagerFactoryBuilder trustManagerFactoryBuilder = new TrustManagerFactoryBuilder();
@@ -57,18 +57,18 @@ public class TestIdentity4J {
     public void TestAuthenticate() throws Exception {
         AuthenticationPretext authenticationPretext = identityServiceProvider.preAuthenticate("guest", clientIp);
         assertNotNull(authenticationPretext);
-        assertEquals(authenticationPretext.getResult().getValue(), "SUCCESS");
+        assertEquals("SUCCESS", authenticationPretext.getResult().getValue());
 
-        assertEquals(authenticationPretext.getDisplayItem().size(), 1);
+        assertEquals(1, authenticationPretext.getDisplayItem().size());
         DisplayItem displayItem = authenticationPretext.getDisplayItem().get(0);
         Map<String, String []> parameterMap = new HashMap<String, String []>();
 
         parameterMap.put(displayItem.getName(), new String [] {"guest"});
         AuthenticationContext authenticationContext = (AuthenticationContext)identityServiceProvider.authenticate(authenticationPretext.getName(), clientIp, parameterMap);
         assertNotNull(authenticationContext);
-        assertEquals(authenticationContext.getResult().getValue(), "SUCCESS");
+        assertEquals("SUCCESS", authenticationContext.getResult().getValue());
         logger.debug("found confidence of " + authenticationContext.getResult().getConfidence());
-        assertEquals(authenticationContext.getResult().getConfidence().doubleValue(), 0.0d, 0.0d);
+        assertEquals(0.33d, authenticationContext.getResult().getConfidence(), 0.10d);
     }
 
     @Test
