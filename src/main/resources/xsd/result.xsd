@@ -4,9 +4,10 @@
     <xs:complexType>
       <xs:simpleContent>
         <xs:extension base="xs:NCName">
-          <xs:attribute name="level" use="required" type="xs:integer"/>
+          <xs:attribute name="level" use="required" type="xs:int"/>
           <xs:attribute name="message" use="required" type="xs:NCName"/>
-          <xs:attribute name="confidence" use="required" type="xs:decimal"/>
+          <xs:attribute name="confidence" use="required" type="xs:double"/>
+          <xs:attribute name="code" use="required" type="xs:int"/>
         </xs:extension>
       </xs:simpleContent>
     </xs:complexType>
