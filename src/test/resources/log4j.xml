@@ -8,13 +8,20 @@
    </layout>
  </appender>
 
+ <appender name="file" class="org.apache.log4j.FileAppender">
+   <param name="file" value="output.log"/>
+   <layout class="org.apache.log4j.PatternLayout">
+     <param name="ConversionPattern" value="[%d{ISO8601}]%5p%6.6r[%t]%x - %C.%M(%F:%L) - %m%n"/>
+   </layout>
+ </appender>
+
  <logger name="com.ufp" additivity="false">
    <level value="debug"/> 
    <appender-ref ref="stdout"/>
  </logger>
 
  <root>
-   <priority value="debug"></priority>
+   <priority value="error"></priority>
    <appender-ref ref="stdout"/>
  </root>
 </log4j:configuration>
