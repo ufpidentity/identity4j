@@ -22,12 +22,12 @@ import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.ClientResponse.Status;
+import com.sun.jersey.api.client.UniformInterfaceException;
 
 import com.ufp.identity4j.data.AuthenticationPretext;
 import com.ufp.identity4j.data.AuthenticationContext;
 import com.ufp.identity4j.data.EnrollmentContext;
-import com.ufp.identity4j.data.DisplayItem;
-import com.ufp.identity4j.data.Result;
+import com.ufp.identity4j.data.EnrollmentPretext;
 
 import com.ufp.identity4j.resolver.IdentityResolver;
 import com.ufp.identity4j.resolver.StaticIdentityResolver;
@@ -161,46 +161,90 @@ public class IdentityServiceProvider {
         }
     }
 
-    public AuthenticationPretext preAuthenticate(String name, String host) throws IdentityServiceException {
-        WebResource webResource = client.resource(identityResolver.getNext().resolve("preauthenticate"));
+    private MultivaluedMap getQueryParams(String name, String host, Map<String, String[]> additionalParams) {
         MultivaluedMap queryParams = new MultivaluedMapImpl();
         queryParams.add("name", name);
         queryParams.add("client_ip", host);
-        AuthenticationPretext authenticationPretext = webResource.queryParams(queryParams).get(AuthenticationPretext.class);
-        logger.debug("got result of " + authenticationPretext.getResult().getValue() + ", with message " + authenticationPretext.getResult().getMessage());
+        if (additionalParams != null) {
+            for (String key : additionalParams.keySet()) {
+                String [] values = additionalParams.get(key);
+                for (String value : values) {
+                    if (!key.equals("submit")) {
+                        logger.debug("adding key " + key + ", with value " + value);
+                        queryParams.add(key, value);
+                    }
+                }
+            }
+        }
+        return queryParams;
+    }
+        
+    public AuthenticationPretext preAuthenticate(String name, String host) throws IdentityServiceException {
+        WebResource webResource = client.resource(identityResolver.getNext().resolve("preauthenticate"));
+        MultivaluedMap queryParams = getQueryParams(name, host, null);
+        AuthenticationPretext authenticationPretext = null;
+        try {
+            authenticationPretext = webResource.queryParams(queryParams).get(AuthenticationPretext.class);
+            logger.debug("got result of " + authenticationPretext.getResult().getValue() + ", with message " + authenticationPretext.getResult().getMessage());
+        } catch (UniformInterfaceException uie) {
+            logger.error(uie.getMessage(), uie);
+        }
         return authenticationPretext;
     }
 
     public Object authenticate(String name, String host, Map<String, String[]> responseParams) throws IdentityServiceException {
         Object r = null;
         WebResource webResource = client.resource(identityResolver.getNext().resolve("authenticate"));
-        MultivaluedMap queryParams = new MultivaluedMapImpl();
-        queryParams.add("name", name);
-        queryParams.add("client_ip", host);
-        for (String key : responseParams.keySet()) {
-            String [] values = responseParams.get(key);
-            for (String value : values) {
-                if (!key.equals("submit")) {
-                    logger.debug("adding key " + key + ", with value " + value);
-                    queryParams.add(key, value);
-                }
-            }
-        }
+        MultivaluedMap queryParams = getQueryParams(name, host, responseParams);
         ClientResponse clientResponse = webResource.queryParams(queryParams).get(ClientResponse.class);
         if (clientResponse.getClientResponseStatus().equals(ClientResponse.Status.OK)) {
             try {
                 r = handleClientResponse(clientResponse);
             } catch (Exception e) {
-                logger.error(e.getMessage());
-                throw new IdentityServiceException(e.getMessage(), e);
+                logger.error(e.getMessage(), e);
             }
         } else
             logger.error("got response of " + clientResponse.getClientResponseStatus());
         return r;
     }
 
-    public EnrollmentContext enroll(String name, String host, Map<String, String[]> responseParams) throws IdentityServiceException {
-        return null;
+    public EnrollmentPretext preenroll(String name, String host) {
+        WebResource webResource = client.resource(identityResolver.getNext().resolve("preenroll"));
+        MultivaluedMap queryParams = getQueryParams(name, host, null);
+        EnrollmentPretext enrollmentPretext = null;
+        try {
+            enrollmentPretext = webResource.queryParams(queryParams).get(EnrollmentPretext.class);
+            logger.debug("got result of " + enrollmentPretext.getResult().getValue() + ", with message " + enrollmentPretext.getResult().getMessage());
+        } catch (UniformInterfaceException uie) {
+            logger.error(uie.getMessage(), uie);
+        }
+        return enrollmentPretext;
+    }
+
+    public EnrollmentContext enroll(String name, String host, Map<String, String[]> responseParams) {
+        WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll"));
+        MultivaluedMap queryParams = getQueryParams(name, host, responseParams);
+        EnrollmentContext enrollmentContext = null;
+        try {
+            enrollmentContext = webResource.queryParams(queryParams).get(EnrollmentContext.class);
+            logger.debug("got result of " + enrollmentContext.getResult().getValue() + ", with message " + enrollmentContext.getResult().getMessage());
+        } catch (UniformInterfaceException uie) {
+            logger.error(uie.getMessage(), uie);
+        }
+        return enrollmentContext;
+    }
+
+    public EnrollmentContext reenroll(String name, String host, Map<String, String[]> responseParams) {
+        WebResource webResource = client.resource(identityResolver.getNext().resolve("reenroll"));
+        MultivaluedMap queryParams = getQueryParams(name, host, responseParams);
+        EnrollmentContext enrollmentContext = null;
+        try {
+            enrollmentContext = webResource.queryParams(queryParams).get(EnrollmentContext.class);
+            logger.debug("got result of " + enrollmentContext.getResult().getValue() + ", with message " + enrollmentContext.getResult().getMessage());
+        } catch (UniformInterfaceException uie) {
+            logger.error(uie.getMessage(), uie);
+        }
+        return enrollmentContext;
     }
 
     private Object handleClientResponse(ClientResponse clientResponse) throws Exception {
@@ -225,5 +269,3 @@ public class IdentityServiceProvider {
         this.keyManagerFactoryBuilder = keyManagerFactoryBuilder;
     }
 }
-    
-    
