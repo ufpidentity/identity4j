@@ -10,17 +10,33 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+
   <xs:element name="display_item">
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="display_name"/>
-        <xs:element ref="form_element"/>
-        <xs:element ref="nickname"/>
+        <xs:element name="display_name" type="xs:string"/>
+        <xs:element name="form_element" type="xs:string"/>
+        <xs:element name="nickname" type="xs:string"/>
       </xs:sequence>
       <xs:attribute name="name" use="required" type="xs:NCName"/>
     </xs:complexType>
   </xs:element>
-  <xs:element name="display_name" type="xs:string"/>
-  <xs:element name="form_element" type="xs:string"/>
-  <xs:element name="nickname" type="xs:string"/>
+
+  <xs:element name="enrollment_pretext">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="result"/>
+        <xs:element maxOccurs="unbounded" ref="form_element"/>
+        <xs:element name="name" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="form_element">
+    <xs:complexType>
+      <xs:element name="element" type="xs:string"/>
+      <xs:attribute name="name" use="required" type="xs:NCName"/>
+      <xs:attribute name="display_name" use="required" type="xs:NCName"/>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>
