@@ -179,7 +179,7 @@ public class IdentityServiceProvider {
         return queryParams;
     }
         
-    public AuthenticationPretext preAuthenticate(String name, String host) throws IdentityServiceException {
+    public AuthenticationPretext preAuthenticate(String name, String host) {
         WebResource webResource = client.resource(identityResolver.getNext().resolve("preauthenticate"));
         MultivaluedMap queryParams = getQueryParams(name, host, null);
         AuthenticationPretext authenticationPretext = null;
@@ -192,7 +192,7 @@ public class IdentityServiceProvider {
         return authenticationPretext;
     }
 
-    public Object authenticate(String name, String host, Map<String, String[]> responseParams) throws IdentityServiceException {
+    public Object authenticate(String name, String host, Map<String, String[]> responseParams) {
         Object r = null;
         WebResource webResource = client.resource(identityResolver.getNext().resolve("authenticate"));
         MultivaluedMap queryParams = getQueryParams(name, host, responseParams);
