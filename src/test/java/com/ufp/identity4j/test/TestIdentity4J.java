@@ -46,10 +46,9 @@ public class TestIdentity4J {
         identityServiceProvider.setKeyManagerFactoryBuilder(keyManagerFactoryBuilder);
         identityServiceProvider.setTrustManagerFactoryBuilder(trustManagerFactoryBuilder);
 
-        //identityServiceProvider.setHostnameVerifier(new IdentityHostnameVerifier("ufp.com"));
-        //identityServiceProvider.setIdentityResolver(new StaticIdentityResolver("https://staging.ufp.com:8443/identity-services/services/"));
-        identityServiceProvider.setHostnameVerifier(new IdentityHostnameVerifier("localhost"));
-        identityServiceProvider.setIdentityResolver(new StaticIdentityResolver("https://localhost:8443/identity-services/services/"));
+        identityServiceProvider.setHostnameVerifier(new IdentityHostnameVerifier("ufp.com"));
+        identityServiceProvider.setIdentityResolver(new StaticIdentityResolver("https://staging.ufp.com:8443/identity-services/services/"));
+        // must call this
         identityServiceProvider.afterPropertiesSet();
     }
 
