@@ -13,8 +13,6 @@ import static org.junit.Assert.*;
 
 import com.ufp.identity4j.data.AuthenticationContext;
 import com.ufp.identity4j.data.AuthenticationPretext;
-import com.ufp.identity4j.data.EnrollmentContext;
-import com.ufp.identity4j.data.EnrollmentPretext;
 import com.ufp.identity4j.data.DisplayItem;
 
 import com.ufp.identity4j.provider.IdentityServiceProvider;
@@ -71,32 +69,5 @@ public class TestIdentity4J {
         assertEquals("SUCCESS", authenticationContext.getResult().getValue());
         logger.debug("found confidence of " + authenticationContext.getResult().getConfidence());
         assertEquals(0.33d, authenticationContext.getResult().getConfidence(), 0.10d);
-    }
-
-    @Test
-    public void TestPreEnroll() {
-        EnrollmentPretext enrollmentPretext = identityServiceProvider.preenroll("guest", clientIp);
-        assertNotNull(enrollmentPretext);
-        assertEquals("SUCCESS", enrollmentPretext.getResult().getValue());
-        assertNotNull(enrollmentPretext.getFormElement());
-        assertEquals(1, enrollmentPretext.getFormElement().size());
-    }
-
-    @Test
-    public void TestEnroll() throws Exception {
-        Map<String, String []> parameterMap = new HashMap<String, String []>();
-        parameterMap.put("passphrase", new String [] {"test123"});
-        EnrollmentContext enrollmentContext = identityServiceProvider.enroll("guest", clientIp, parameterMap);
-        assertNotNull(enrollmentContext);
-        assertEquals("SUCCESS", enrollmentContext.getResult().getValue());
-    }
-
-    @Test
-    public void TestReEnroll() throws Exception {
-        Map<String, String []> parameterMap = new HashMap<String, String []>();
-        parameterMap.put("passphrase", new String [] {"test123"});
-        EnrollmentContext enrollmentContext = identityServiceProvider.enroll("guest", clientIp, parameterMap);
-        assertNotNull(enrollmentContext);
-        assertEquals("SUCCESS", enrollmentContext.getResult().getValue());
     }
 }
