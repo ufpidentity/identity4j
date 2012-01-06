@@ -1,5 +1,10 @@
 package com.ufp.identity4j.provider;
 
+
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+
 import java.util.List;
 import java.util.Map;
 
@@ -245,6 +250,49 @@ public class IdentityServiceProvider {
             logger.error(uie.getMessage(), uie);
         }
         return enrollmentContext;
+    }
+
+    private String getHeaderString(List <String> headerParams) {
+        StringBuffer stringBuffer = new StringBuffer();
+        int size = headerParams.size();
+
+        for (int index = 0; index < size-1; index++) {
+            stringBuffer.append(String.format("$%s,", headerParams.get(index)));
+        }
+        stringBuffer.append(String.format("$%s", headerParams.get(size-1)));
+        return stringBuffer.toString();
+    }
+
+
+    public OutputStream batchEnroll(String host, List<String> headerParams) throws Exception {
+        final PipedInputStream inputStream = new PipedInputStream();
+        PipedOutputStream outputStream = new PipedOutputStream(inputStream);
+        
+        // first we write the parameters for batch enroll
+        String hostParameter = String.format("$client_ip=%s\n$type=import\n", host);
+        outputStream.write(hostParameter.getBytes(), 0, hostParameter.length());
+        
+        String headerParameter = getHeaderString(headerParams);
+        outputStream.write(headerParameter.getBytes(), 0, headerParameter.length());
+
+        // now stream until close
+        new Thread(new Runnable() {
+                public void run() {
+                    byte buffer[] = new byte[2048];
+                    int count = 0;
+                    try {
+                        int n = 0;
+                        while ( (n = inputStream.read(buffer)) >= 0) {
+                            count += n;
+                        }
+                        inputStream.close();
+                        System.out.println("read " + count + " bytes");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        return outputStream;
     }
 
     private Object handleClientResponse(ClientResponse clientResponse) throws Exception {
