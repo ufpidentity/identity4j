@@ -18,6 +18,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.HttpsURLConnection;
 
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.MediaType;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -259,34 +260,30 @@ public class IdentityServiceProvider {
         for (int index = 0; index < size-1; index++) {
             stringBuffer.append(String.format("$%s,", headerParams.get(index)));
         }
-        stringBuffer.append(String.format("$%s", headerParams.get(size-1)));
+        stringBuffer.append(String.format("$%s\n", headerParams.get(size-1)));
         return stringBuffer.toString();
     }
-
 
     public OutputStream batchEnroll(String host, List<String> headerParams) throws Exception {
         final PipedInputStream inputStream = new PipedInputStream();
         PipedOutputStream outputStream = new PipedOutputStream(inputStream);
-        
+
         // first we write the parameters for batch enroll
         String hostParameter = String.format("$client_ip=%s\n$type=import\n", host);
         outputStream.write(hostParameter.getBytes(), 0, hostParameter.length());
-        
+
         String headerParameter = getHeaderString(headerParams);
         outputStream.write(headerParameter.getBytes(), 0, headerParameter.length());
 
         // now stream until close
         new Thread(new Runnable() {
                 public void run() {
-                    byte buffer[] = new byte[2048];
-                    int count = 0;
                     try {
-                        int n = 0;
-                        while ( (n = inputStream.read(buffer)) >= 0) {
-                            count += n;
-                        }
+                        WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll"));
+                        logger.debug("about to call post");
+                        webResource.type(MediaType.APPLICATION_OCTET_STREAM_TYPE).post(inputStream);
+                        logger.debug("about to call close");
                         inputStream.close();
-                        System.out.println("read " + count + " bytes");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
