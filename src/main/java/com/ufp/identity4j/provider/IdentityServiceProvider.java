@@ -264,7 +264,7 @@ public class IdentityServiceProvider {
         return stringBuffer.toString();
     }
 
-    public OutputStream batchEnroll(String host, List<String> headerParams) throws Exception {
+    public BatchEnrollmentContext batchEnroll(String host, List<String> headerParams) throws Exception {
         final PipedInputStream inputStream = new PipedInputStream();
         PipedOutputStream outputStream = new PipedOutputStream(inputStream);
 
@@ -276,7 +276,7 @@ public class IdentityServiceProvider {
         outputStream.write(headerParameter.getBytes(), 0, headerParameter.length());
 
         // now stream until close
-        new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
                 public void run() {
                     try {
                         WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll"));
@@ -288,8 +288,9 @@ public class IdentityServiceProvider {
                         e.printStackTrace();
                     }
                 }
-            }).start();
-        return outputStream;
+            });
+        thread.start();
+        return new BatchEnrollmentContext(outputStream, thread);
     }
 
     private Object handleClientResponse(ClientResponse clientResponse) throws Exception {
