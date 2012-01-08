@@ -1,6 +1,5 @@
 package com.ufp.identity4j.provider;
 
-
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -167,10 +166,10 @@ public class IdentityServiceProvider {
         }
     }
 
-    private MultivaluedMap getQueryParams(String name, String host, Map<String, String[]> additionalParams) {
+    private MultivaluedMap getQueryParams(String name, String clientIp, Map<String, String[]> additionalParams) {
         MultivaluedMap queryParams = new MultivaluedMapImpl();
         queryParams.add("name", name);
-        queryParams.add("client_ip", host);
+        queryParams.add("client_ip", clientIp);
         if (additionalParams != null) {
             for (String key : additionalParams.keySet()) {
                 String [] values = additionalParams.get(key);
@@ -184,10 +183,9 @@ public class IdentityServiceProvider {
         }
         return queryParams;
     }
-        
-    public AuthenticationPretext preAuthenticate(String name, String host) {
+    public AuthenticationPretext preAuthenticate(String name, String clientIp) {
         WebResource webResource = client.resource(identityResolver.getNext().resolve("preauthenticate"));
-        MultivaluedMap queryParams = getQueryParams(name, host, null);
+        MultivaluedMap queryParams = getQueryParams(name, clientIp, null);
         AuthenticationPretext authenticationPretext = null;
         try {
             authenticationPretext = webResource.queryParams(queryParams).get(AuthenticationPretext.class);
@@ -198,10 +196,10 @@ public class IdentityServiceProvider {
         return authenticationPretext;
     }
 
-    public Object authenticate(String name, String host, Map<String, String[]> responseParams) {
+    public Object authenticate(String name, String clientIp, Map<String, String[]> parameters) {
         Object r = null;
         WebResource webResource = client.resource(identityResolver.getNext().resolve("authenticate"));
-        MultivaluedMap queryParams = getQueryParams(name, host, responseParams);
+        MultivaluedMap queryParams = getQueryParams(name, clientIp, parameters);
         ClientResponse clientResponse = webResource.queryParams(queryParams).get(ClientResponse.class);
         if (clientResponse.getClientResponseStatus().equals(ClientResponse.Status.OK)) {
             try {
@@ -214,9 +212,9 @@ public class IdentityServiceProvider {
         return r;
     }
 
-    public EnrollmentPretext preenroll(String name, String host) {
+    public EnrollmentPretext preenroll(String name, String clientIp) {
         WebResource webResource = client.resource(identityResolver.getNext().resolve("preenroll"));
-        MultivaluedMap queryParams = getQueryParams(name, host, null);
+        MultivaluedMap queryParams = getQueryParams(name, clientIp, null);
         EnrollmentPretext enrollmentPretext = null;
         try {
             enrollmentPretext = webResource.queryParams(queryParams).get(EnrollmentPretext.class);
@@ -227,9 +225,9 @@ public class IdentityServiceProvider {
         return enrollmentPretext;
     }
 
-    public EnrollmentContext enroll(String name, String host, Map<String, String[]> responseParams) {
+    public EnrollmentContext enroll(String name, String clientIp, Map<String, String[]> parameters) {
         WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll"));
-        MultivaluedMap queryParams = getQueryParams(name, host, responseParams);
+        MultivaluedMap queryParams = getQueryParams(name, clientIp, parameters);
         EnrollmentContext enrollmentContext = null;
         try {
             enrollmentContext = webResource.queryParams(queryParams).get(EnrollmentContext.class);
@@ -240,9 +238,9 @@ public class IdentityServiceProvider {
         return enrollmentContext;
     }
 
-    public EnrollmentContext reenroll(String name, String host, Map<String, String[]> responseParams) {
+    public EnrollmentContext reenroll(String name, String clientIp, Map<String, String[]> parameters) {
         WebResource webResource = client.resource(identityResolver.getNext().resolve("reenroll"));
-        MultivaluedMap queryParams = getQueryParams(name, host, responseParams);
+        MultivaluedMap queryParams = getQueryParams(name, clientIp, parameters);
         EnrollmentContext enrollmentContext = null;
         try {
             enrollmentContext = webResource.queryParams(queryParams).get(EnrollmentContext.class);
@@ -264,12 +262,12 @@ public class IdentityServiceProvider {
         return stringBuffer.toString();
     }
 
-    public BatchEnrollmentContext batchEnroll(String host, List<String> headerParams) throws Exception {
+    public BatchEnrollmentContext batchEnroll(String clientIp, List<String> headerParams) throws Exception {
         final PipedInputStream inputStream = new PipedInputStream();
         PipedOutputStream outputStream = new PipedOutputStream(inputStream);
 
         // first we write the parameters for batch enroll
-        String hostParameter = String.format("$client_ip=%s\n$type=import\n", host);
+        String hostParameter = String.format("$client_ip=%s\n$type=import\n", clientIp);
         outputStream.write(hostParameter.getBytes(), 0, hostParameter.length());
 
         String headerParameter = getHeaderString(headerParams);
