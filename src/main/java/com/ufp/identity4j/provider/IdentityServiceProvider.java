@@ -49,66 +49,12 @@ import org.apache.log4j.Logger;
  * The Identity service provider does a direct interaction with the
  * Identity service. Data objects specific to the service are returned
  * in a generic way to allow for a wide variety of integrations.
- *
  * <p>
- * An example of a pretext (may contain multiple display items and subsequent calls may return any number of pretexts (n.b. the <code>form_element</code> values are escaped so that they can be directly injected into a page for rendering):
+ * Enroll is typically very specific to an integration. We will provide a custom enrollment to address your needs.
+ * The enrollment methods below are generic enough to handle most any type of custom needs. Generally {@link #enroll} handles situations where
+ * the user does not exist (create and import). {@link #reEnroll} handles situations where the user already exists (update, delete).
  * <p>
- * <pre>
-&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
-&lt;authentication_pretext&gt;
-  &lt;result quality=&quot;0.0&quot; level=&quot;3&quot; message=&quot;OK&quot;&gt;SUCCESS&lt;/result&gt;
-  &lt;display_item name=&quot;secret&quot;&gt;
-    &lt;display_name&gt;Enter Secret&lt;/display_name&gt;
-    &lt;form_element&gt;&amp;lt;input id=&amp;quot;AuthParam0&amp;quot; type=&amp;quot;text&amp;quot; name=&amp;quot;secret&amp;quot; /&amp;gt;&lt;/form_element&gt;
-    &lt;nickname&gt;saw (w/AIM)&lt;/nickname&gt;
-  &lt;/display_item&gt;
-  &lt;display_item name=&quot;passphrase&quot;&gt;
-    &lt;display_name&gt;Enter Passphrase&lt;/display_name&gt;
-    &lt;form_element&gt;&amp;lt;input id=&amp;quot;AuthParam1&amp;quot; type=&amp;quot;text&amp;quot; name=&amp;quot;passphrase&amp;quot; /&amp;gt;&lt;/form_element&gt;
-    &lt;nickname&gt;Default Password&lt;/nickname&gt;
-  &lt;/display_item&gt;
-&lt;/authentication_pretext&gt;
- * </pre>
- * <p>
- * An example of a successful authentication:
- * <p>
- * <pre>
-&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
-&lt;authentication_context&gt;
-  &lt;result quality=&quot;0.0&quot; level=&quot;1&quot; message=&quot;OK&quot;&gt;SUCCESS&lt;/result&gt;
-  &lt;name&gt;alice@example.com&lt;/name&gt;
-&lt;/authentication_context&gt;
- * </pre>
- * An example of a successful authentication that requires a continuation:
- * <p>
- * <pre>
-&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
-&lt;authentication_pretext&gt;
-  &lt;result quality=&quot;0.0&quot; level=&quot;0&quot; message=&quot;Further authentication is required&quot;&gt;CONTINUE&lt;/result&gt;
-  &lt;display_item name=&quot;secret&quot;&gt;
-    &lt;display_name&gt;Enter Secret&lt;/display_name&gt;
-    &lt;form_element&gt;&lt;input id=&quot;AuthParam0&quot; type=&quot;text&quot; name=&quot;secret&quot; /&gt;&lt;/form_element&gt;
-    &lt;nickname&gt;saw (w/AIM)&lt;/nickname&gt;
-  &lt;/display_item&gt;
-&lt;/authentication_pretext&gt;
- * </pre>
- * An example of a pre-authentication failure:
- * <p>
- * <pre>
-&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
-&lt;authentication_pretext&gt;
-  &lt;result quality=&quot;0.0&quot; level=&quot;0&quot; message=&quot;User not found&quot;&gt;FAILURE&lt;/result&gt;
-&lt;/authentication_pretext&gt;
- * </pre>
- * An example of an authentication failure:
- * <p>
- * <pre>
-&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
-&lt;authentication_context&gt;
-  &lt;result quality=&quot;0.0&quot; level=&quot;0&quot; message=&quot;Authentication failed&quot;&gt;FAILURE&lt;/result&gt;
-  &lt;name&gt;alice@example.com&lt;/name&gt;
-&lt;/authentication_context&gt;
- * </pre>
+ * The specific elements of the parameters argument(s) are determined by your custom enrollment needs.
  */
 public class IdentityServiceProvider {
     private static Logger logger = Logger.getLogger(IdentityServiceProvider.class);
@@ -120,20 +66,20 @@ public class IdentityServiceProvider {
     private KeyManagerFactoryBuilder keyManagerFactoryBuilder;
 
     /**
-     * Handle default injection if nothing was explicitly set.
+     * Handle setup and default injection(s) if nothing was explicitly set. This method must be called after setting the necessary properties and
+     * before using any further methods.
      * <p>
-     * Meant to be used with Spring dependency injection. Will set a
-     * default {@link IdentityResolver}, suitable for low-volume sites, and a default {@link HostnameVerifier} suitable for most integrations.
+     * Will set a default {@link IdentityResolver} and a default {@link HostnameVerifier} suitable for most integrations.
      * <p>
      * Methods are available to explicitly set (or have dependencies
-     * injected) the {@link IdentityResolver} to one more suitable for
-     * testing or for HA requirements, the {@link HostnameVerifier}
-     * for testing or more lax requirements.
+     * injected) the {@link IdentityResolver} and {@link HostnameVerifier}.
      * <p>
      * n. b. No {@link TrustManagerFactoryBuilder} or {@link  KeyManagerFactoryBuilder} are set by default. These objects are
      * specific to integrations and must be either explicitly
      * dependency injected or set using {@link #setTrustManagerFactoryBuilder(TrustManagerFactoryBuilder)} and
      * {@link #setKeyManagerFactoryBuilder(KeyManagerFactoryBuilder)}.
+     * <p>
+     * See the test package for an example of how the IdentityServiceProvider would be setup.
      */
     public void afterPropertiesSet() {
         if (identityResolver == null)
@@ -183,6 +129,18 @@ public class IdentityServiceProvider {
         }
         return queryParams;
     }
+
+    /**
+     * Authenticating with ufpIdentity is a two or more pass process that ALWAYS starts with preAuthenticate.
+     * An {@link AuthenticationPretext} object is returned indicating success or failure. In the success case, one or more {@link com.ufp.identity4j.data.DisplayItem}s
+     * are included which must be presented to the user. In the failure case, the {@link com.ufp.identity4j.data.Result} contains information about the failure
+     * which may be used to adjust the user experience e.g. start a registration of the user, in the case of a NOT_FOUND. In the case of other errors, it is usually
+     * not a good idea to indicate the error to the user, but rather some generic error or just resetting for a new user id.
+     *
+     * @param name the user id to be authenticated
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @return {@link AuthenticationPretext} or null if some error occurs
+     */
     public AuthenticationPretext preAuthenticate(String name, String clientIp) {
         WebResource webResource = client.resource(identityResolver.getNext().resolve("preauthenticate"));
         MultivaluedMap queryParams = getQueryParams(name, clientIp, null);
@@ -196,6 +154,19 @@ public class IdentityServiceProvider {
         return authenticationPretext;
     }
 
+    /**
+     * After a successful preAuthenticate, additional parameters are collected and passed to authenticate. In the case of a successful authentication,
+     * either an {@link AuthenticationContext} indicating success OR an additional {@link AuthenticationPretext} may be returned with a result of CONTINUE
+     * indicating that further authentication is required. In the case of failure, an {@link AuthenticationContext} is returned with
+     * a {@link com.ufp.identity4j.data.Result} indicating
+     * the nature of the failure. In the special case of a RESET failure, contextual information about the user information has been cleaned up (perhaps due to timeout)
+     * and the entire process must be reset. In the general case of failure, care must be taken not to indicate the nature of the failure to the user.
+     *
+     * @param name the user id to be authenticated
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param parameters additional parameters collected from the user
+     * @return {@link AuthenticationContext}, {@link AuthenticationPretext} or null in the case of error
+     */
     public Object authenticate(String name, String clientIp, Map<String, String[]> parameters) {
         Object r = null;
         WebResource webResource = client.resource(identityResolver.getNext().resolve("authenticate"));
@@ -212,7 +183,18 @@ public class IdentityServiceProvider {
         return r;
     }
 
-    public EnrollmentPretext preenroll(String name, String clientIp) {
+    /**
+     * A helper function to see if enrollment for the specified user will succeed (user does not already exist) and get a list of
+     * {@link com.ufp.identity4j.data.FormElement} needed to enroll a new user.
+     * <p>
+     * If the {@link com.ufp.identity4j.data.Result} contained in the EnrollmentPretext indicates an error, an enrollment will not
+     * succeed with the named user.
+     *
+     * @param name the user id to be authenticated
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @return {@link EnrollmentPretext} or null in the case of error
+     */
+    public EnrollmentPretext preEnroll(String name, String clientIp) {
         WebResource webResource = client.resource(identityResolver.getNext().resolve("preenroll"));
         MultivaluedMap queryParams = getQueryParams(name, clientIp, null);
         EnrollmentPretext enrollmentPretext = null;
@@ -225,6 +207,16 @@ public class IdentityServiceProvider {
         return enrollmentPretext;
     }
 
+    /**
+     * Performs enrollment of the named user. The user must not already exist. The parameters argument is a map of the custom enrollment key/value pairs.
+     * The {@link EnrollmentContext} will contain a {@link com.ufp.identity4j.data.Result} indicating SUCCESS or FAILURE. In the latter
+     * case, the message and code will indicate the details of the error. Care should be taken not to propagate the error condition to the user.
+     *
+     * @param name the user id to be authenticated
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param parameters additional parameters collected from the user
+     * @return {@link EnrollmentContext} or null in the case of error
+     */
     public EnrollmentContext enroll(String name, String clientIp, Map<String, String[]> parameters) {
         WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll"));
         MultivaluedMap queryParams = getQueryParams(name, clientIp, parameters);
@@ -238,7 +230,17 @@ public class IdentityServiceProvider {
         return enrollmentContext;
     }
 
-    public EnrollmentContext reenroll(String name, String clientIp, Map<String, String[]> parameters) {
+    /**
+     * Performs re-enrollment of the user. The user must already exist. The parameters argument is a map of the custom enrollment key/value pairs.
+     * The {@link EnrollmentContext} will contain a {@link com.ufp.identity4j.data.Result} indicating SUCCESS or FAILURE. In the latter
+     * case, the message and code will indicate the details of the error. Care should be taken not to propagate the error condition to the user.
+     *
+     * @param name the user id to be authenticated
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param parameters additional parameters collected from the user
+     * @return {@link EnrollmentContext} or null in the case of error
+     */
+    public EnrollmentContext reEnroll(String name, String clientIp, Map<String, String[]> parameters) {
         WebResource webResource = client.resource(identityResolver.getNext().resolve("reenroll"));
         MultivaluedMap queryParams = getQueryParams(name, clientIp, parameters);
         EnrollmentContext enrollmentContext = null;
@@ -262,6 +264,40 @@ public class IdentityServiceProvider {
         return stringBuffer.toString();
     }
 
+    /**
+     * Batch enrollment provides very fast enrollment of existing users. It is only meant to be used once for importing existing users. Modifications
+     * to existing users should be disabled while enrolling. New users can be created however as long as they are created with {@link #enroll}.
+     * <p>
+     * The header parameters are the names of the parameters that will be written to the output stream returned in the BatchEnrollmentContext. If, for instance,
+     * the custom enrollment defines the enrollment parameters to be name, email and password then the list might be initialized as follows:
+     * <pre>
+     *  List<String> headerParams = new ArrayList<String>() {{
+     *    add("name");
+     *    add("email");
+     *    add("password");
+     *  }};
+     * </pre>
+     * After calling the batchEnroll method, the BatchEnrollmentContext contains an OutputStream. The caller is expected to write comma
+     * separated, URL encoded values corresponding to the header parameters separated by new lines ('\n'). The caller is also expected to close
+     * the output stream and wait for the thread to finish.
+     * <pre>
+     *  String [] elements = { "test01@example.com,test01,test01pass", "test02@example.com,test02,test02pass", "test03@example.com,test03,test03pass" };
+     *  OutputStream outputStream = batchEnrollmentContext.getOutputStream();
+     *  for (String element : elements) {
+     *      outputStream.write(element.getBytes(), 0, element.length());
+     *      outputStream.write('\n');
+     *  }
+     *  outputStream.flush();
+     *  outputStream.close();
+     *
+     *  // wait for batch enroll thread to finish
+     *  batchEnrollmentContext.getThread().join();
+     * </pre>
+     *
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param headerParams custom import enrollment parameter names
+     * @return BatchEnrollmentContext containing contextual objects for the batch enrollment
+     */
     public BatchEnrollmentContext batchEnroll(String clientIp, List<String> headerParams) throws Exception {
         final PipedInputStream inputStream = new PipedInputStream();
         PipedOutputStream outputStream = new PipedOutputStream(inputStream);
