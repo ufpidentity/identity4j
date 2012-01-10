@@ -6,8 +6,7 @@ import java.net.URISyntaxException;
 import org.apache.log4j.Logger;
 
 /**
- * An {@link IdentityResolver} that does no load balancing. Suitable for low-volume authentication requirements.
- * Defaults to staging, can be set to other instances
+ * An {@link IdentityResolver} that does no load balancing.
  */
 public class  StaticIdentityResolver implements IdentityResolver {
     private static Logger logger = Logger.getLogger(StaticIdentityResolver.class);

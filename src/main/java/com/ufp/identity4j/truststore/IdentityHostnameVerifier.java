@@ -5,6 +5,9 @@ import javax.net.ssl.SSLSession;
 
 import org.apache.log4j.Logger;
 
+/**
+ * Custom hostname verifier to allow for any ufp.com services host to validate.
+ */
 public class IdentityHostnameVerifier implements HostnameVerifier {
     private static Logger logger = Logger.getLogger(IdentityHostnameVerifier.class);
 
@@ -20,7 +23,7 @@ public class IdentityHostnameVerifier implements HostnameVerifier {
     }
 
     public boolean verify(String hostname, SSLSession session) {
-	logger.debug("verifying hostname " + hostname + " peer hostname " + session.getPeerHost());
+        logger.debug("verifying hostname " + hostname + " peer hostname " + session.getPeerHost());
         if (hostnameToVerify == null) 
             hostnameToVerify = "ufp.com";
         return hostname.endsWith(hostnameToVerify);
