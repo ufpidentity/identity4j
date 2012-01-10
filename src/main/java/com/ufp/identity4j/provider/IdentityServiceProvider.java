@@ -79,7 +79,25 @@ public class IdentityServiceProvider {
      * dependency injected or set using {@link #setTrustManagerFactoryBuilder(TrustManagerFactoryBuilder)} and
      * {@link #setKeyManagerFactoryBuilder(KeyManagerFactoryBuilder)}.
      * <p>
-     * See the test package for an example of how the IdentityServiceProvider would be setup.
+     * An example of how the IdentityServiceProvider would be setup:
+     * <pre>
+     *  IdentityServiceProvider identityServiceProvider = new IdentityServiceProvider();
+     *
+     *  // setup the key manager factory
+     *  KeyManagerFactoryBuilder keyManagerFactoryBuilder = new KeyManagerFactoryBuilder();
+     *  keyManagerFactoryBuilder.setStore(new File("example.com.p12"));
+     *  keyManagerFactoryBuilder.setPassphrase("super_secret_password");
+     *
+     *  // setup the trust store
+     *  TrustManagerFactoryBuilder trustManagerFactoryBuilder = new TrustManagerFactoryBuilder();
+     *  trustManagerFactoryBuilder.setStore(new File("truststore.jks"));
+     *  trustManagerFactoryBuilder.setPassphrase("truststore_password");
+
+     *  // set provider properties
+     *  identityServiceProvider.setKeyManagerFactoryBuilder(keyManagerFactoryBuilder);
+     *  identityServiceProvider.setTrustManagerFactoryBuilder(trustManagerFactoryBuilder);
+     *  identityServiceProvider.afterPropertiesSet();
+     * </pre>
      */
     public void afterPropertiesSet() {
         if (identityResolver == null)
@@ -132,13 +150,13 @@ public class IdentityServiceProvider {
 
     /**
      * Authenticating with ufpIdentity is a two or more pass process that ALWAYS starts with preAuthenticate.
-     * An {@link AuthenticationPretext} object is returned indicating success or failure. In the success case, one or more {@link com.ufp.identity4j.data.DisplayItem}s
-     * are included which must be presented to the user. In the failure case, the {@link com.ufp.identity4j.data.Result} contains information about the failure
+     * An {@link AuthenticationPretext} object is returned indicating SUCCESS or FAILURE. In the SUCCESS case, one or more {@link com.ufp.identity4j.data.DisplayItem}s
+     * are included which must be presented to the user. In the FAILURE case, the {@link com.ufp.identity4j.data.Result} contains information about the failure
      * which may be used to adjust the user experience e.g. start a registration of the user, in the case of a NOT_FOUND. In the case of other errors, it is usually
      * not a good idea to indicate the error to the user, but rather some generic error or just resetting for a new user id.
      *
      * @param name the user id to be authenticated
-     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRemoteAddr()}
      * @return {@link AuthenticationPretext} or null if some error occurs
      */
     public AuthenticationPretext preAuthenticate(String name, String clientIp) {
@@ -156,14 +174,14 @@ public class IdentityServiceProvider {
 
     /**
      * After a successful preAuthenticate, additional parameters are collected and passed to authenticate. In the case of a successful authentication,
-     * either an {@link AuthenticationContext} indicating success OR an additional {@link AuthenticationPretext} may be returned with a result of CONTINUE
-     * indicating that further authentication is required. In the case of failure, an {@link AuthenticationContext} is returned with
+     * either an {@link AuthenticationContext} indicating SUCCESS OR an additional {@link AuthenticationPretext} may be returned with a result of CONTINUE
+     * indicating that further authentication is required. In the case of FAILURE, an {@link AuthenticationContext} is returned with
      * a {@link com.ufp.identity4j.data.Result} indicating
      * the nature of the failure. In the special case of a RESET failure, contextual information about the user information has been cleaned up (perhaps due to timeout)
-     * and the entire process must be reset. In the general case of failure, care must be taken not to indicate the nature of the failure to the user.
+     * and the entire process must be reset. In the general case of FAILURE, care must be taken not to indicate the nature of the failure to the user.
      *
      * @param name the user id to be authenticated
-     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRemoteAddr()}
      * @param parameters additional parameters collected from the user
      * @return {@link AuthenticationContext}, {@link AuthenticationPretext} or null in the case of error
      */
@@ -191,7 +209,7 @@ public class IdentityServiceProvider {
      * succeed with the named user.
      *
      * @param name the user id to be authenticated
-     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRemoteAddr()}
      * @return {@link EnrollmentPretext} or null in the case of error
      */
     public EnrollmentPretext preEnroll(String name, String clientIp) {
@@ -213,7 +231,7 @@ public class IdentityServiceProvider {
      * case, the message and code will indicate the details of the error. Care should be taken not to propagate the error condition to the user.
      *
      * @param name the user id to be authenticated
-     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRemoteAddr()}
      * @param parameters additional parameters collected from the user
      * @return {@link EnrollmentContext} or null in the case of error
      */
@@ -236,7 +254,7 @@ public class IdentityServiceProvider {
      * case, the message and code will indicate the details of the error. Care should be taken not to propagate the error condition to the user.
      *
      * @param name the user id to be authenticated
-     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRemoteAddr()}
      * @param parameters additional parameters collected from the user
      * @return {@link EnrollmentContext} or null in the case of error
      */
@@ -269,11 +287,11 @@ public class IdentityServiceProvider {
      * to existing users should be disabled while enrolling. New users can be created however as long as they are created with {@link #enroll}.
      * <p>
      * The header parameters are the names of the parameters that will be written to the output stream returned in the BatchEnrollmentContext. If, for instance,
-     * the custom enrollment defines the enrollment parameters to be name, email and password then the list might be initialized as follows:
+     * the custom enrollment defines the enrollment parameters to be email, name and password then the list might be initialized as follows:
      * <pre>
      *  List<String> headerParams = new ArrayList<String>() {{
-     *    add("name");
      *    add("email");
+     *    add("name");
      *    add("password");
      *  }};
      * </pre>
@@ -293,8 +311,9 @@ public class IdentityServiceProvider {
      *  // wait for batch enroll thread to finish
      *  batchEnrollmentContext.getThread().join();
      * </pre>
+     * The order of the parameters MUST match the order of the header parameters which name them.
      *
-     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRequestAddr()}
+     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRemoteAddr()}
      * @param headerParams custom import enrollment parameter names
      * @return BatchEnrollmentContext containing contextual objects for the batch enrollment
      */
