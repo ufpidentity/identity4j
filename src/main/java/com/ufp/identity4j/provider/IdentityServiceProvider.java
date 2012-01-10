@@ -346,6 +346,12 @@ public class IdentityServiceProvider {
         return new BatchEnrollmentContext(outputStream, thread);
     }
 
+    /**
+     * After calling batch enroll, periodically check the enrollment status to determine when user modifications can be allowed.
+     * ufpIdentity handles about 2500 enrollments every 20 minutes. 
+     * 
+     * @return boolean if true, enrollment finished, if false enrollment has not finished
+     */
     public boolean checkEnrollmentStatus() {
         boolean enrollmentStatus = false;
         WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll/status"));
