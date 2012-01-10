@@ -346,6 +346,22 @@ public class IdentityServiceProvider {
         return new BatchEnrollmentContext(outputStream, thread);
     }
 
+    public boolean checkEnrollmentStatus() {
+        boolean enrollmentStatus = false;
+        WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll/status"));
+        try {
+            ClientResponse clientResponse = webResource.get(ClientResponse.class);
+            if (clientResponse != null) {
+                ClientResponse.Status status = clientResponse.getClientResponseStatus();
+                logger.debug("got enrollment status of " + status);
+                enrollmentStatus = status.equals(ClientResponse.Status.OK);
+            }
+        } catch (UniformInterfaceException uie) {
+            logger.error(uie.getMessage(), uie);
+        }
+        return enrollmentStatus;
+    }
+
     private Object handleClientResponse(ClientResponse clientResponse) throws Exception {
         JAXBContext jaxbContext = JAXBContext.newInstance(AuthenticationPretext.class, AuthenticationContext.class);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
