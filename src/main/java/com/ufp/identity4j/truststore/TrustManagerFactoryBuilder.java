@@ -12,7 +12,28 @@ import org.apache.log4j.Logger;
 
 /** 
  * Builder to return Trust Manager factory encapsulating the trust store. ufpIdentity requires a closed truststore. Make absolutely sure you
- * are only using ufpIdentity public certificates. 
+ * are only using ufpIdentity public certificates. It is highly
+ * recommended that you acquire the ufpIdentity certificates, verify them against published fingerprints and create your own secure truststore.
+ * <h4>Creating a keystore with ufpIdentity certificates</h4>
+ * <p>Due to the way keytool works, the procedure for creating a truststore consists of generating a new keystore, containing a dummy keychain, deleting the dummy keychain and then adding the certificates.<p>
+ * <ol>
+ * <li>Create the new keystore with dummy keychain</li>
+ * <pre>
+ * keytool -genkey -alias dummy -keyalg RSA -keystore truststore.jks
+ * </pre>
+ * <li>Delete the alias dummy, to have an empty trust-store</li>
+ * <pre>
+ * keytool -delete -alias dummy -keystore truststore.jks
+ * </pre>
+ * <li>Import ufpIdentity certificates that you have verified by fingerprint</li>
+ * <pre>
+ * keytool -import -v -trustcacerts -alias my_ca -file public/ca.crt -keystore truststore.jks
+ * </pre>
+ * <li>Check your truststore</li>
+ * <pre>
+ * keytool -v -list -keystore truststore.jks
+ * </pre>
+ *</ol>
  */
 public class TrustManagerFactoryBuilder extends AbstractFactoryBuilder {
     private static Logger logger = Logger.getLogger(TrustManagerFactoryBuilder.class);
