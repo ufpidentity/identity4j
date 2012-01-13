@@ -2,7 +2,7 @@ Identity4j is a java library for interacting with the ufpIdentity service. ufpId
 
 To get started, build the javadocs using:
 
-   mvn clean javadoc:aggregate
+    mvn clean javadoc:aggregate
 
 The javadoc overview provides details about how to use the library.
 
