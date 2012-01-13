@@ -10,11 +10,12 @@ import org.apache.log4j.Logger;
  */
 public class IdentityHostnameVerifier implements HostnameVerifier {
     private static Logger logger = Logger.getLogger(IdentityHostnameVerifier.class);
+    private static String DEFAULT_HOSTNAME = "ufp.com";
 
     private String hostnameToVerify;
 
     public IdentityHostnameVerifier() {
-        this(null);
+        this(DEFAULT_HOSTNAME);
     }
 
     public IdentityHostnameVerifier(String hostnameToVerify) {
@@ -23,9 +24,7 @@ public class IdentityHostnameVerifier implements HostnameVerifier {
     }
 
     public boolean verify(String hostname, SSLSession session) {
-        logger.debug("verifying hostname " + hostname + " peer hostname " + session.getPeerHost());
-        if (hostnameToVerify == null) 
-            hostnameToVerify = "ufp.com";
+        logger.debug("verifying hostname " + hostname + " peer hostname " + session.getPeerHost() + " against " + hostnameToVerify);
         return hostname.endsWith(hostnameToVerify);
     }
 
