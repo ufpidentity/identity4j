@@ -2,52 +2,107 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <title>ufp Identity4J Overview</title>
+  <title>ufp Identity4j Overview</title>
 </head>
 <body>
-<p>Provides the classes and methods necessary for authenticating with Identity4J</p>
+<p>Provides the classes and methods necessary for authenticating with ufpIdentity</p>
 
-<p>Before using the Identity4J library, you need a few configuration
-items. You will need credentials for your account to connect to the
-service. We can supply you with the proper credentials which require a
-public/private key pair and certificate or you can generate your own public/private keypair
-and certificate signing request for us to sign. To have us provide you
-the necessary credentials including private key, please contact us at
-<a href="mailto:info@ufp.com">info@ufp.com</a>.</p>
+<p>Before using the Identity4j library, you will need credentials for
+your account to connect to the service. You will need to generate your own public/private keypair and
+certificate signing request for us to sign.</p>
 
-<p>To generate your own private key and <abbr title="Certificate Signing Request">CSR</abbr> you can use the popular <a
+<p>To generate your own private key and <abbr title="Certificate
+Signing Request">CSR</abbr> you can use the popular <a
 href="http://www.openssl.org">OpenSSL</a> program, which is already
-installed on most Unix systems.</p>
+installed on most Unix systems and Mac. Please read the section on choosing an
+appropriate <a href="#cn">Common Name</a></p>
 
 <p>To generate a private/public key pair:</p>
 <pre>
 openssl req -new -newkey rsa:1024 -keyout example.com.key.pem -keyform pem -out example.com.req.pem -outform pem
 </pre>
 
-<p>Which will generate a new 1024 bit key and write it to example.com.key.pem and a <abbr title="Certificate Signing Request">CSR</abbr> in example.com.req.pem. Enter a good, strong password for your key when openssl prompts you:</p>
+<p>Which will generate a new 1024 bit key and write it to
+example.com.key.pem and a <abbr title="Certificate Signing
+Request">CSR</abbr> in example.com.req.pem. Enter a good, strong
+password for your key when openssl prompts you:</p>
 
 <pre>
 Enter PEM pass phrase:
 Verifying - Enter PEM pass phrase:
 </pre>
 
-<p>The necessary elements of the <abbr title="Certificate Signing Request">CSR</abbr> are in <span style="color: blue;">blue</span>, the optional ones in <span style="color: green;">green</span>:</p>
+<p>The necessary elements of the <abbr title="Certificate Signing Request">CSR</abbr> are in <span style="color: blue;">blue</span>, the optional ones in <span style="color: green;">green</span>. Make sure to carefully enter the information and replace example.com, etc. with your own information:</p>
 
 <pre>
 <span style="color: blue;">Country Name (2 letter code) [US]:</span>
 <span style="color: blue;">State or Province Name (full name) [Some-State]:</span>
 <span style="color: blue;">Locality Name (eg, city) []:</span>
-<span style="color: green;">Organization Name (eg, company) [Example, Inc.]:</span>
+<span style="color: blue;">Organization Name (eg, company) [Example, Inc.]:</span>
 <span style="color: green;">Organizational Unit Name (eg, section) []:</span>
 <span style="color: blue;">Common Name (eg, YOUR name) [example.com]:</span>
-<span style="color: green;">Email Address []:</span>
+<span style="color: blue;">Email Address [you@example.com]:</span>
 </pre>
 
 <p>Send the resulting <abbr title="Certificate Signing Request">CSR</abbr> to us at <a href="mailto:info@ufp.com">info@ufp.com</a> and we will generate a
 <a href="http://www.rsa.com/rsalabs/node.asp?id=2138">PKCS#12</a> format file for you.</p>
 
-<p>You must configure the provider with your newly created <a href="http://www.rsa.com/rsalabs/node.asp?id=2138">PKCS#12</a>
-file and truststore (also available from <a href="mailto:info@ufp.com">info@ufp.com</a>). A sample of the code required is in the unit test directory.</p>
+<p>You must configure the provider with your newly created <a
+href="http://www.rsa.com/rsalabs/node.asp?id=2138">PKCS#12</a> file
+and a truststore (also available from <a
+href="mailto:info@ufp.com">info@ufp.com</a>). It is recommended that
+you acquire the ufpIdentity certificates and create your own secure
+truststore. Please see {@link com.ufp.identity4j.truststore.TrustManagerFactoryBuilder} for more detailed instructions.</p>
 
+<h4>Example of configuring a provider</h4>
+<pre>
+IdentityServiceProvider identityServiceProvider = new IdentityServiceProvider();
+
+// setup the key manager factory
+KeyManagerFactoryBuilder keyManagerFactoryBuilder = new KeyManagerFactoryBuilder();
+keyManagerFactoryBuilder.setStore(new File("magrathea.com.p12"));
+keyManagerFactoryBuilder.setPassphrase("super_secret_certificate_password");
+
+// setup the trust store
+TrustManagerFactoryBuilder trustManagerFactoryBuilder = new TrustManagerFactoryBuilder();
+trustManagerFactoryBuilder.setStore(new File("truststore.jks"));
+trustManagerFactoryBuilder.setPassphrase("super_secret_truststore_password");
+
+// set provider properties
+identityServiceProvider.setKeyManagerFactoryBuilder(keyManagerFactoryBuilder);
+identityServiceProvider.setTrustManagerFactoryBuilder(trustManagerFactoryBuilder);
+
+/** 
+ * Initially you will be onboarded to the staging farm. Once integration is complete and tested, migration to the production farm will
+ * occur and this line will not be necessary
+ */
+identityServiceProvider.setIdentityResolver(new StaticIdentityResolver("https://staging.ufp.com:8443/identity-services/services/"));
+
+// must call this
+identityServiceProvider.afterPropertiesSet();
+</pre>
+
+<h4>Example of authenticating</h4>
+<pre>
+  TODO: .jsp example of how to authenticate with Identity4j
+</pre>
+
+<a name="cn"/>
+<h4>Choosing an appropriate Common Name</h4>
+<p>The Common Name of your certificate is used to identify you and also to
+group logins. You can utilize the same certificate on multiple
+instances as long as they all share the same group of users. For
+example if a design team is working on a number of sites you would
+request one certificate with a common name representing the design
+team users (e.g. magrathea.com) to be utilized across all the
+development instances of the sites. Then once a site goes live, and
+needs its own group of users another certificate would be requested
+for instances of that specific site (e.g. earth.com). Common names
+should typically look like domain names but other than being unique,
+can be flexible. It is also a good idea to name your credential files
+(.key.pem, .req.pem, .crt.pem) the same as your common name
+(e.g. magrathea.com.key.pem, etc.). Please contact us at <a
+href="mailto:info@ufp.com">info@ufp.com</a> if you have any
+questions.</p>
 </body>
 </html>
