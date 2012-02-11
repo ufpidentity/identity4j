@@ -19,13 +19,17 @@ appropriate <a href="#cn">Common Name</a></p>
 
 <p>To generate a private/public key pair:</p>
 <pre>
-openssl req -new -newkey rsa:1024 -keyout example.com.key.pem -keyform pem -out example.com.req.pem -outform pem
+openssl req -new -newkey rsa:2048 -keyout magrathea.com.key.pem -keyform pem -out magrathea.com.csr.pem -outform pem
 </pre>
 
-<p>Which will generate a new 1024 bit key and write it to
-example.com.key.pem and a <abbr title="Certificate Signing
-Request">CSR</abbr> in example.com.req.pem. Enter a good, strong
-password for your key when openssl prompts you:</p>
+<p>Which will generate a new 2048 bit key and write it to
+magrathea.com.key.pem and a <abbr title="Certificate Signing Request">CSR</abbr> in magrathea.com.req.pem.</p>
+
+<p>Enter a good, strong password for your key when openssl prompts you:</p>
+<blockquote>
+  <p>To create a very strong password for your Certificate Request a script (random.sh) is provided in this package which generates a random password. The 
+  script works on most unix-like systems. The password must only contain US-ASCII characters that can be typed on a standard keyboard.</p>
+</blockquote>
 
 <pre>
 Enter PEM pass phrase:
@@ -44,15 +48,15 @@ Verifying - Enter PEM pass phrase:
 <span style="color: blue;">Email Address [you@example.com]:</span>
 </pre>
 
-<p>Send the resulting <abbr title="Certificate Signing Request">CSR</abbr> to us at <a href="mailto:info@ufp.com">info@ufp.com</a> and we will generate a
-<a href="http://www.rsa.com/rsalabs/node.asp?id=2138">PKCS#12</a> format file for you.</p>
+<p>Send the resulting <abbr title="Certificate Signing Request">CSR</abbr> to us at <a href="mailto:info@ufp.com">info@ufp.com</a> and we will sign and return
+a certificate to you.</p>
 
-<p>You must configure the provider with your newly created <a
-href="http://www.rsa.com/rsalabs/node.asp?id=2138">PKCS#12</a> file
-and a truststore (also available from <a
-href="mailto:info@ufp.com">info@ufp.com</a>). It is recommended that
-you acquire the ufpIdentity certificates and create your own secure
-truststore. Please see {@link com.ufp.identity4j.truststore.TrustManagerFactoryBuilder} for more detailed instructions.</p>
+<p>You must configure the {@link com.ufp.identity4j.provider.IdentityServiceProvider} with a <a href="http://www.rsa.com/rsalabs/node.asp?id=2138">PKCS#12</a> file
+and a truststore (also available from <a href="mailto:info@ufp.com">info@ufp.com</a>). Please see {@link com.ufp.identity4j.truststore.KeyManagerFactoryBuilder}
+for details on creating your PKCS#12 file. It is also recommended that you acquire
+the ufpIdentity certificates and create your own secure
+truststore. Please see {@link com.ufp.identity4j.truststore.TrustManagerFactoryBuilder} for more
+detailed instructions.</p>
 
 <h4>Example of configuring a provider</h4>
 <pre>
