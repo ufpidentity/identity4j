@@ -34,7 +34,9 @@
 
   <xs:element name="form_element">
     <xs:complexType>
-      <xs:element name="element" type="xs:string"/>
+      <xs:sequence>
+        <xs:element name="element" type="xs:string"/>
+      </xs:sequence>
       <xs:attribute name="name" use="required" type="xs:NCName"/>
       <xs:attribute name="display_name" use="required" type="xs:NCName"/>
     </xs:complexType>
