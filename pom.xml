@@ -60,7 +60,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <forkMode>pertest</forkMode>
-          <!-- <argLine>-Djavax.net.debug=all</argLine> -->
+          <argLine>-Djavax.net.debug=ssl,handshake -Dhttps.protocols="TLSv1"</argLine>
         </configuration>
       </plugin>
 
