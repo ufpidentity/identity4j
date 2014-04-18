@@ -27,7 +27,7 @@ magrathea.com.key.pem and a <abbr title="Certificate Signing Request">CSR</abbr>
 
 <p>Enter a good, strong password for your key when openssl prompts you:</p>
 <blockquote>
-  <p>To create a very strong password for your Certificate Request a script (random.sh) is provided in this package which generates a random password. The 
+  <p>To create a very strong password for your Certificate Request a script (random.sh) is provided in this package which generates a random password. The
   script works on most unix-like systems. The password must only contain US-ASCII characters that can be typed on a standard keyboard.</p>
 </blockquote>
 
@@ -75,12 +75,6 @@ trustManagerFactoryBuilder.setPassphrase("super_secret_truststore_password");
 // set provider properties
 identityServiceProvider.setKeyManagerFactoryBuilder(keyManagerFactoryBuilder);
 identityServiceProvider.setTrustManagerFactoryBuilder(trustManagerFactoryBuilder);
-
-/** 
- * Initially you will be onboarded to the staging farm. Once integration is complete and tested, migration to the production farm will
- * occur and this line will not be necessary
- */
-identityServiceProvider.setIdentityResolver(new StaticIdentityResolver("https://staging.ufp.com:8443/identity-services/services/"));
 
 // must call this
 identityServiceProvider.afterPropertiesSet();

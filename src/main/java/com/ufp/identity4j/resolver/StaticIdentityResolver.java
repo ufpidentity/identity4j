@@ -25,8 +25,8 @@ public class  StaticIdentityResolver implements IdentityResolver {
     public URI getNext() {
         if (uri == null) {
             try  {
-                if (uriString == null) 
-                    uriString = "https://identity.ufp.com:8443/identity-services/services/";
+                if (uriString == null)
+                    uriString = "https://identity.ufp.com/identity-services/services/";
                 uri = new URI(uriString);
             } catch (URISyntaxException use) {
                 logger.error(use.getMessage(), use);
