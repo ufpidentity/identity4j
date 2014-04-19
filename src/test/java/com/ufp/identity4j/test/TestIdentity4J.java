@@ -67,6 +67,6 @@ public class TestIdentity4J {
         assertNotNull(authenticationContext);
         assertEquals("SUCCESS", authenticationContext.getResult().getValue());
         logger.debug("found confidence of " + authenticationContext.getResult().getConfidence());
-        assertEquals(0.33d, authenticationContext.getResult().getConfidence(), 0.10d);
+        assertEquals(0.00d, authenticationContext.getResult().getConfidence(), 0.10d);
     }
 }
