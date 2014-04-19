@@ -10,7 +10,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jersey.version>1.6</jersey.version>
+    <jersey.version>1.18</jersey.version>
   </properties>
 
   <repositories>
