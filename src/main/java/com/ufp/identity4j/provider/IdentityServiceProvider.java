@@ -59,7 +59,7 @@ import org.apache.log4j.Logger;
 public class IdentityServiceProvider {
     private static Logger logger = Logger.getLogger(IdentityServiceProvider.class);
 
-    private static Client client;
+    private ClientConfig clientConfig;
     private IdentityResolver identityResolver;
     private HostnameVerifier hostnameVerifier;
     private TrustManagerFactoryBuilder trustManagerFactoryBuilder;
@@ -102,29 +102,29 @@ public class IdentityServiceProvider {
     public void afterPropertiesSet() {
         if (identityResolver == null)
             identityResolver = new StaticIdentityResolver();
-        if (hostnameVerifier == null) 
+        if (hostnameVerifier == null)
             hostnameVerifier = new IdentityHostnameVerifier();
         try {
-            ClientConfig clientConfig = new DefaultClientConfig();
+            clientConfig = new DefaultClientConfig();
             SSLContext sslContext = SSLContext.getInstance("TLSv1");
             logger.debug("getting trustManagerFactory");
             TrustManagerFactory trustManagerFactory = trustManagerFactoryBuilder.getTrustManagerFactory();
-            TrustManager tms [] = trustManagerFactory.getTrustManagers();  
-   
+            TrustManager tms [] = trustManagerFactory.getTrustManagers();
+
             logger.debug("found " + tms.length + " trustManager(s)");
-            /* 
-             * Iterate over the returned trustmanagers, look 
-             * for an instance of X509TrustManager.  If found, 
-             * use that as our "default" trust manager. 
-             */  
-            for (int i = 0; i < tms.length; i++) {  
+            /*
+             * Iterate over the returned trustmanagers, look
+             * for an instance of X509TrustManager.  If found,
+             * use that as our "default" trust manager.
+             */
+            for (int i = 0; i < tms.length; i++) {
                 logger.debug("[" + i + "] " + tms[i].toString());
-            }  
+            }
 
             sslContext.init(keyManagerFactoryBuilder.getKeyManagerFactory().getKeyManagers(), tms, null);
-            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+            //HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+            SSLContext.setDefault(sslContext);
             clientConfig.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(hostnameVerifier, sslContext));
-            client = Client.create(clientConfig);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -160,7 +160,7 @@ public class IdentityServiceProvider {
      * @return {@link AuthenticationPretext} or null if some error occurs
      */
     public AuthenticationPretext preAuthenticate(String name, String clientIp) {
-        WebResource webResource = client.resource(identityResolver.getNext().resolve("preauthenticate"));
+        WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("preauthenticate"));
         MultivaluedMap queryParams = getQueryParams(name, clientIp, null);
         AuthenticationPretext authenticationPretext = null;
         try {
@@ -187,7 +187,7 @@ public class IdentityServiceProvider {
      */
     public Object authenticate(String name, String clientIp, Map<String, String[]> parameters) {
         Object r = null;
-        WebResource webResource = client.resource(identityResolver.getNext().resolve("authenticate"));
+        WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("authenticate"));
         MultivaluedMap queryParams = getQueryParams(name, clientIp, parameters);
         ClientResponse clientResponse = webResource.queryParams(queryParams).get(ClientResponse.class);
         if (clientResponse.getClientResponseStatus().equals(ClientResponse.Status.OK)) {
@@ -213,7 +213,7 @@ public class IdentityServiceProvider {
      * @return {@link EnrollmentPretext} or null in the case of error
      */
     public EnrollmentPretext preEnroll(String name, String clientIp) {
-        WebResource webResource = client.resource(identityResolver.getNext().resolve("preenroll"));
+        WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("preenroll"));
         MultivaluedMap queryParams = getQueryParams(name, clientIp, null);
         EnrollmentPretext enrollmentPretext = null;
         try {
@@ -236,7 +236,7 @@ public class IdentityServiceProvider {
      * @return {@link EnrollmentContext} or null in the case of error
      */
     public EnrollmentContext enroll(String name, String clientIp, Map<String, String[]> parameters) {
-        WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll"));
+        WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("enroll"));
         MultivaluedMap queryParams = getQueryParams(name, clientIp, parameters);
         EnrollmentContext enrollmentContext = null;
         try {
@@ -259,7 +259,7 @@ public class IdentityServiceProvider {
      * @return {@link EnrollmentContext} or null in the case of error
      */
     public EnrollmentContext reEnroll(String name, String clientIp, Map<String, String[]> parameters) {
-        WebResource webResource = client.resource(identityResolver.getNext().resolve("reenroll"));
+        WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("reenroll"));
         MultivaluedMap queryParams = getQueryParams(name, clientIp, parameters);
         EnrollmentContext enrollmentContext = null;
         try {
@@ -332,7 +332,7 @@ public class IdentityServiceProvider {
         Thread thread = new Thread(new Runnable() {
                 public void run() {
                     try {
-                        WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll"));
+                        WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("enroll"));
                         logger.debug("about to call post");
                         webResource.type(MediaType.APPLICATION_OCTET_STREAM_TYPE).post(inputStream);
                         logger.debug("about to call close");
@@ -348,13 +348,13 @@ public class IdentityServiceProvider {
 
     /**
      * After calling batch enroll, periodically check the enrollment status to determine when user modifications can be allowed.
-     * ufpIdentity handles about 2500 enrollments every 20 minutes. 
-     * 
+     * ufpIdentity handles about 2500 enrollments every 20 minutes.
+     *
      * @return boolean if true, enrollment finished, if false enrollment has not finished
      */
     public boolean checkEnrollmentStatus() {
         boolean enrollmentStatus = false;
-        WebResource webResource = client.resource(identityResolver.getNext().resolve("enroll/status"));
+        WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("enroll/status"));
         try {
             ClientResponse clientResponse = webResource.get(ClientResponse.class);
             if (clientResponse != null) {
@@ -373,7 +373,7 @@ public class IdentityServiceProvider {
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         return unmarshaller.unmarshal(clientResponse.getEntityInputStream());
     }
-    
+
     public void setIdentityResolver(IdentityResolver identityResolver) {
         this.identityResolver = identityResolver;
     }
