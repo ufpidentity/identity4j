@@ -58,6 +58,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.17</version>
         <configuration>
           <forkMode>pertest</forkMode>
           <argLine>-Djavax.net.debug=ssl,handshake -Dhttps.protocols="TLSv1"</argLine>
@@ -67,6 +68,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
         <configuration>
           <archive>
             <addMavenDescriptor>false</addMavenDescriptor>
@@ -77,6 +79,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9.1</version>
         <configuration>
           <aggregate>true</aggregate>
           <links>
@@ -89,6 +92,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>jaxb2-maven-plugin</artifactId>
+        <version>1.6</version>
         <executions>
           <execution>
             <goals>
