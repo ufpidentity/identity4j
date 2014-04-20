@@ -107,6 +107,7 @@ public class IdentityServiceProvider {
         try {
             clientConfig = new DefaultClientConfig();
             SSLContext sslContext = SSLContext.getInstance("TLSv1");
+            System.setProperty("https.protocols", "TLSv1");
             logger.debug("getting trustManagerFactory");
             TrustManagerFactory trustManagerFactory = trustManagerFactoryBuilder.getTrustManagerFactory();
             TrustManager tms [] = trustManagerFactory.getTrustManagers();
