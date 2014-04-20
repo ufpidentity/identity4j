@@ -1,4 +1,4 @@
 /**
- * Provider implementation for authenticating with ufp Identity service.
+ * Provider implementation for authenticating with UFP Identity service.
  */
 package com.ufp.identity4j.provider;

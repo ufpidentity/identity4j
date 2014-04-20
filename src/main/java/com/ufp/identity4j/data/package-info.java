@@ -1,5 +1,5 @@
 /**
- * Data representations for the ufp Identity api.
+ * Data representations for the UFP Identity API.
  * <h3>Result</h3>
  * A few notes about the attributes of a Result object. Depending on the type of Context the Result is part of, the value of the Result object may be
  * one of SUCCESS, FAILURE, CONTINUE or RESET with a corresponding message indicating some additional textual information. The message, along with the
@@ -8,7 +8,7 @@
  * For security purposes, not indicating what actually went wrong to the user prevents malicious users from knowing too much about the system.
  * <p>
  * A result object contains two other attributes. For the vast majority of sites the confidence and level can be ignored. The confidence reflects the
- * ufpIdentity's confidence in the authentication. For instance if the user has entered the correct password but risk analysis has determined a high risk,
+ * UFP Identity's confidence in the authentication. For instance if the user has entered the correct password but risk analysis has determined a high risk,
  * the confidence may be lowered. The level indicates an aggregate level of strength of the authentication. A simple password that has been used for some
  * time may have a low level. A two-factor authentication token may have higher level.
  *

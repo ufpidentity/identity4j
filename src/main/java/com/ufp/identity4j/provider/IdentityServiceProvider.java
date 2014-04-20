@@ -149,7 +149,7 @@ public class IdentityServiceProvider {
     }
 
     /**
-     * Authenticating with ufpIdentity is a two or more pass process that ALWAYS starts with preAuthenticate.
+     * Authenticating with UFP Identity is a two or more pass process that ALWAYS starts with preAuthenticate.
      * An {@link AuthenticationPretext} object is returned indicating SUCCESS or FAILURE. In the SUCCESS case, one or more {@link com.ufp.identity4j.data.DisplayItem}s
      * are included which must be presented to the user. In the FAILURE case, the {@link com.ufp.identity4j.data.Result} contains information about the failure
      * which may be used to adjust the user experience e.g. start a registration of the user, in the case of a NOT_FOUND. In the case of other errors, it is usually
@@ -348,7 +348,7 @@ public class IdentityServiceProvider {
 
     /**
      * After calling batch enroll, periodically check the enrollment status to determine when user modifications can be allowed.
-     * ufpIdentity handles about 2500 enrollments every 20 minutes.
+     * UFP Identity handles about 2500 enrollments every 20 minutes.
      *
      * @return boolean if true, enrollment finished, if false enrollment has not finished
      */
