@@ -7,6 +7,9 @@ import java.io.PipedOutputStream;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
@@ -160,9 +163,9 @@ public class IdentityServiceProvider {
      * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRemoteAddr()}
      * @return {@link AuthenticationPretext} or null if some error occurs
      */
-    public AuthenticationPretext preAuthenticate(String name, String clientIp) {
+    public AuthenticationPretext preAuthenticate(String name, HttpServletRequest httpServletRequest) {
         WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("preauthenticate"));
-        MultivaluedMap queryParams = getQueryParams(name, clientIp, null);
+        MultivaluedMap queryParams = getQueryParams(name, httpServletRequest.getRemoteHost(), null);
         AuthenticationPretext authenticationPretext = null;
         try {
             authenticationPretext = webResource.queryParams(queryParams).get(AuthenticationPretext.class);
@@ -186,10 +189,10 @@ public class IdentityServiceProvider {
      * @param parameters additional parameters collected from the user
      * @return {@link AuthenticationContext}, {@link AuthenticationPretext} or null in the case of error
      */
-    public Object authenticate(String name, String clientIp, Map<String, String[]> parameters) {
+    public Object authenticate(String name, HttpServletRequest httpServletRequest, Map<String, String[]> parameters) {
         Object r = null;
         WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("authenticate"));
-        MultivaluedMap queryParams = getQueryParams(name, clientIp, parameters);
+        MultivaluedMap queryParams = getQueryParams(name, httpServletRequest.getRemoteHost(), parameters);
         ClientResponse clientResponse = webResource.queryParams(queryParams).get(ClientResponse.class);
         if (clientResponse.getClientResponseStatus().equals(ClientResponse.Status.OK)) {
             try {
