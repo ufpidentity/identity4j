@@ -11,6 +11,8 @@ import org.junit.Test;
 import org.junit.BeforeClass;
 import static org.junit.Assert.*;
 
+import org.springframework.mock.web.MockHttpServletRequest;
+
 import com.ufp.identity4j.data.AuthenticationContext;
 import com.ufp.identity4j.data.AuthenticationPretext;
 import com.ufp.identity4j.data.DisplayItem;
@@ -26,12 +28,10 @@ import org.apache.log4j.Logger;
 public class TestIdentity4J {
     private static IdentityServiceProvider identityServiceProvider;
     private static Logger logger = Logger.getLogger(TestIdentity4J.class);
-    private static String clientIp;
 
     @BeforeClass
     public static void setupIdentity4JProvider() throws Exception {
         identityServiceProvider = new IdentityServiceProvider();
-        clientIp = InetAddress.getLocalHost().getHostAddress();
         // setup the key manager factory
         KeyManagerFactoryBuilder keyManagerFactoryBuilder = new KeyManagerFactoryBuilder();
         keyManagerFactoryBuilder.setStore(new File("src/test/resources/example.com.p12"));
@@ -54,7 +54,7 @@ public class TestIdentity4J {
 
     @Test
     public void TestAuthenticate() throws Exception {
-        AuthenticationPretext authenticationPretext = identityServiceProvider.preAuthenticate("guest", clientIp);
+        AuthenticationPretext authenticationPretext = identityServiceProvider.preAuthenticate("guest", new MockHttpServletRequest());
         assertNotNull(authenticationPretext);
         assertEquals("SUCCESS", authenticationPretext.getResult().getValue());
 
@@ -63,7 +63,7 @@ public class TestIdentity4J {
         Map<String, String []> parameterMap = new HashMap<String, String []>();
 
         parameterMap.put(displayItem.getName(), new String [] {"guest"});
-        AuthenticationContext authenticationContext = (AuthenticationContext)identityServiceProvider.authenticate(authenticationPretext.getName(), clientIp, parameterMap);
+        AuthenticationContext authenticationContext = (AuthenticationContext)identityServiceProvider.authenticate(authenticationPretext.getName(), new MockHttpServletRequest(), parameterMap);
         assertNotNull(authenticationContext);
         assertEquals("SUCCESS", authenticationContext.getResult().getValue());
         logger.debug("found confidence of " + authenticationContext.getResult().getConfidence());
