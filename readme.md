@@ -25,6 +25,6 @@ and the following repository to your repositories section:
     <repository>
       <id>maven2-repository.ufp.com</id>
       <name>UFP Identity Repository for Maven</name>
-      <url>http://repo.ufp.com/maven2/</url>
+      <url>https://www.ufp.com/maven2</url>
       <layout>default</layout>
     </repository>
