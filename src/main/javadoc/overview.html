@@ -19,7 +19,7 @@ appropriate <a href="#cn">Common Name</a></p>
 
 <p>To generate a private/public key pair:</p>
 <pre>
-openssl req -new -newkey rsa:2048 -keyout magrathea.com.key.pem -keyform pem -out magrathea.com.csr.pem -outform pem
+openssl req -new -newkey rsa:2048 -sha256 -keyout magrathea.com.key.pem -keyform pem -out magrathea.com.csr.pem -outform pem
 </pre>
 
 <p>Which will generate a new 2048 bit key and write it to
