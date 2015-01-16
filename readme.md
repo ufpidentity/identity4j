@@ -17,7 +17,7 @@ For maven, add the following dependency to your dependency section:
     <dependency>
       <groupId>com.ufp</groupId>
       <artifactId>identity4j</artifactId>
-      <version>1.0.1</version>
+      <version>1.2.0</version>
     </dependency>
 
 and the following repository to your repositories section:
