@@ -21,6 +21,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -68,6 +69,8 @@ public class IdentityServiceProvider {
     private TrustManagerFactoryBuilder trustManagerFactoryBuilder;
     private KeyManagerFactoryBuilder keyManagerFactoryBuilder;
 
+    public static final String IDENTITY_SESSION = "IDENTITY_SESSION";
+    public static final String JSESSIONID = "JSESSIONID";
     /**
      * Handle setup and default injection(s) if nothing was explicitly set. This method must be called after setting the necessary properties and
      * before using any further methods.
@@ -152,15 +155,39 @@ public class IdentityServiceProvider {
         return queryParams;
     }
 
+    private void processClientResponse(ClientResponse clientResponse, HttpSession httpSession) {
+        assert clientResponse.getClientResponseStatus().equals(ClientResponse.Status.OK);
+        assert httpSession != null;
+
+        for (String key : clientResponse.getHeaders().keySet()) {
+            String value = clientResponse.getHeaders().getFirst(key);
+            logger.debug("found key " + key + " with value " + value);
+            if (key.equals("Set-Cookie")) {
+                String [] parts = value.split(";");
+                for (String part : parts) {
+                    if (part.startsWith(JSESSIONID)) {
+                        String sessionId = part.split("=")[1];
+                        logger.debug("found session id of " + sessionId);
+                        httpSession.setAttribute(IDENTITY_SESSION, sessionId);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Authenticating with UFP Identity is a two or more pass process that ALWAYS starts with preAuthenticate.
      * An {@link AuthenticationPretext} object is returned indicating SUCCESS or FAILURE. In the SUCCESS case, one or more {@link com.ufp.identity4j.data.DisplayItem}s
-     * are included which must be presented to the user. In the FAILURE case, the {@link com.ufp.identity4j.data.Result} contains information about the failure
+     * are included which must be presented to the user. In addition the {@link AuthenticationPretext} contains the name element which must be used in the
+     * subsequent calls. The name passed in by the user and the user element of the {@link AuthenticationPretext} must never be assumed to be the same.
+     * <p>
+     * In the FAILURE case, the {@link com.ufp.identity4j.data.Result} contains information about the failure
      * which may be used to adjust the user experience e.g. start a registration of the user, in the case of a NOT_FOUND. In the case of other errors, it is usually
      * not a good idea to indicate the error to the user, but rather some generic error or just resetting for a new user id.
      *
      * @param name the user id to be authenticated
-     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRemoteAddr()}
+     * @param httpServletRequest the servletRequest of the current request from which we get {@link javax.servlet.ServletRequest#getRemoteAddr()} and
+     *   {@link javax.servlet.http.HttpServletRequest#getSession()} and {@link javax.servlet.http.HttpServletRequest#getSession(boolean)}
      * @return {@link AuthenticationPretext} or null if some error occurs
      */
     public AuthenticationPretext preAuthenticate(String name, HttpServletRequest httpServletRequest) {
@@ -168,8 +195,13 @@ public class IdentityServiceProvider {
         MultivaluedMap queryParams = getQueryParams(name, httpServletRequest.getRemoteHost(), null);
         AuthenticationPretext authenticationPretext = null;
         try {
-            authenticationPretext = webResource.queryParams(queryParams).get(AuthenticationPretext.class);
-            logger.debug("got result of " + authenticationPretext.getResult().getValue() + ", with message " + authenticationPretext.getResult().getMessage());
+            ClientResponse clientResponse = webResource.type(MediaType.APPLICATION_FORM_URLENCODED).post(ClientResponse.class, queryParams);
+            if (clientResponse.getClientResponseStatus().equals(ClientResponse.Status.OK)) {
+                processClientResponse(clientResponse, httpServletRequest.getSession());
+                authenticationPretext = clientResponse.getEntity(AuthenticationPretext.class);
+                logger.debug("got result of " + authenticationPretext.getResult().getValue() + ", with message " + authenticationPretext.getResult().getMessage());
+            } else
+                logger.error("got response of " + clientResponse.getClientResponseStatus());
         } catch (UniformInterfaceException uie) {
             logger.error(uie.getMessage(), uie);
         }
@@ -179,13 +211,19 @@ public class IdentityServiceProvider {
     /**
      * After a successful preAuthenticate, additional parameters are collected and passed to authenticate. In the case of a successful authentication,
      * either an {@link AuthenticationContext} indicating SUCCESS OR an additional {@link AuthenticationPretext} may be returned with a result of CONTINUE
-     * indicating that further authentication is required. In the case of FAILURE, an {@link AuthenticationContext} is returned with
+     * indicating that further authentication is required. In the case of SUCCESS the {@link AuthenticationContext} contains the name element which must be used
+     * as the logged in user. The name passed in by the user and the user element of the {@link AuthenticationContext} must never be assumed to be the same.
+     * <p>
+     * In the case of FAILURE, an {@link AuthenticationContext} is returned with
      * a {@link com.ufp.identity4j.data.Result} indicating
-     * the nature of the failure. In the special case of a RESET failure, contextual information about the user information has been cleaned up (perhaps due to timeout)
+     * the nature of the failure.
+     * <p>
+     * In the special case of a RESET failure, contextual information about the user information has been cleaned up (perhaps due to timeout)
      * and the entire process must be reset. In the general case of FAILURE, care must be taken not to indicate the nature of the failure to the user.
      *
      * @param name the user id to be authenticated
-     * @param clientIp the client ip of the user authenticating, usually from {@link javax.servlet.ServletRequest#getRemoteAddr()}
+     * @param httpServletRequest the servletRequest of the current request from which we get {@link javax.servlet.ServletRequest#getRemoteAddr()} and
+     *   {@link javax.servlet.http.HttpServletRequest#getSession()} and {@link javax.servlet.http.HttpServletRequest#getSession(boolean)}
      * @param parameters additional parameters collected from the user
      * @return {@link AuthenticationContext}, {@link AuthenticationPretext} or null in the case of error
      */
@@ -193,8 +231,26 @@ public class IdentityServiceProvider {
         Object r = null;
         WebResource webResource = Client.create(clientConfig).resource(identityResolver.getNext().resolve("authenticate"));
         MultivaluedMap queryParams = getQueryParams(name, httpServletRequest.getRemoteHost(), parameters);
-        ClientResponse clientResponse = webResource.queryParams(queryParams).get(ClientResponse.class);
+
+        WebResource.Builder builder = webResource.getRequestBuilder();
+        HttpSession httpSession = httpServletRequest.getSession(false);
+        if (httpSession != null) {
+            String sessionId = (String)httpSession.getAttribute(IDENTITY_SESSION);
+            if (sessionId != null) {
+                logger.debug("using session id " + sessionId);
+                builder = builder.cookie(new NewCookie(JSESSIONID, sessionId));
+            }
+        }
+        ClientResponse clientResponse = builder.type(MediaType.APPLICATION_FORM_URLENCODED).post(ClientResponse.class, queryParams);
         if (clientResponse.getClientResponseStatus().equals(ClientResponse.Status.OK)) {
+            /**
+             * We are relying on two things here. 1) If the above code setting the JSESSIONID worked, then no
+             * Set-Cookie will be present in the headers and its ok to call this code. 2) If there was no associated
+             * session (i.e. httpServletRequest.getSession(false) returned null, then we really want a session and we
+             * should see a Set-Cookie. There is another case if session fixation session switching happens, we defintely
+             * want the new session as well.
+             */
+            processClientResponse(clientResponse, httpServletRequest.getSession());
             try {
                 r = handleClientResponse(clientResponse);
             } catch (Exception e) {
